@@ -9,13 +9,15 @@
 #define MAXSPLIT 80 
 
 void splitCmd(char *cmd, int *ac, char* av[]);
-
+void strReplace(char* av, char* path, int ac);
 int main(void)
 {
     int ac;
     char cmd[MAXLEN];
+    char path[MAXLEN];
     pid_t child;
     int status;
+    getcwd(path, MAXLEN);
 
     while (1) {
         char *av[MAXSPLIT] = {0};
@@ -28,7 +30,12 @@ int main(void)
             exit(0);
         }
         if (strcmp(av[0], "cd") == 0) {
-            chdir(av[1]);
+            if (av[1] == NULL) {
+                chdir(path);
+            } else {
+                strReplace(av[1], path, ac);
+                chdir(av[1]);
+            }
         }
         if ((child = fork()) < 0) {
             printf("fork error\n");
@@ -62,3 +69,19 @@ void splitCmd(char *cmd, int *ac, char* av[])
     }
 }
 
+/* "~"をホームディレクトリのパスに置換 */
+void strReplace(char* av, char* path, int ac)
+{
+    char tmp[MAXLEN];
+    char *p;
+    int i;
+    for (i = 0; i < ac; i++) {
+        while ((p = strstr(av, "~")) != NULL) {
+            *p = '\0';
+            p += 1;
+            strcpy(tmp, p);
+            strcat(av, path);
+            strcat(av, tmp);
+        }
+    }
+}
