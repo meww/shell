@@ -72,7 +72,9 @@ void strReplace(char* av, char* path, int ac)
 void execCmd(char *av[], int ac, char *path)
 {
     char* argv[MAXSPLIT] = {0};
-    int i, j;
+    int i, j, k;
+    int f_stdin = 0; 
+    int f_stdout = 0;
     int fd;
     pid_t child;
     int status;
