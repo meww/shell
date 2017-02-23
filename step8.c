@@ -71,7 +71,7 @@ void strReplace(char* av, char* path, int ac)
 void execCmd(char *av[], int ac, char *path)
 {
     char* argv[MAXSPLIT] = {0};
-    int i, j;
+    int i;
     int num_in = 0; 
     int num_out = 0;
     int fd_in, fd_out;
@@ -107,8 +107,7 @@ void execCmd(char *av[], int ac, char *path)
         } else {
             if (num_in != 0) {
                 /* error check */
-                fd_in = open(av[num_in + 1], 
-                    O_RDWR|O_CREAT|O_TRUNC, 0644);
+                fd_in = open(av[num_in + 1], O_RDONLY);
                 close(0);
                 dup(fd_in);
                 close(fd_in);
@@ -122,7 +121,7 @@ void execCmd(char *av[], int ac, char *path)
             if (num_out != 0) {
                 /* error check */
                 fd_out = open(av[num_out + 1], 
-                    O_RDWR|O_CREAT|O_TRUNC, 0644);
+                    O_WRONLY|O_CREAT|O_TRUNC, 0644);
                 close(1);
                 dup(fd_out);
                 close(fd_out);
@@ -144,10 +143,6 @@ void execCmd(char *av[], int ac, char *path)
                         argv[i] = av[i];
                     }
                     argv[i] = NULL;
-                }
-                printf("in = %d, out = %d\n", num_in, num_out);
-                for (j = 0; j < i; j++) {
-                    printf("argv[%d]= %s\n", i, argv[i]);
                 }
             }
             execvp(argv[0], argv);
