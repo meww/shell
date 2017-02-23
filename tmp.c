@@ -52,6 +52,7 @@ void splitCmd(char *cmd, int *ac, char* av[])
     }
 }
 
+/* "~"をホームディレクトリのパスに置換 */
 void strReplace(char* av, char* path, int ac)
 {
     char tmp[MAXLEN];
@@ -71,10 +72,10 @@ void strReplace(char* av, char* path, int ac)
 void execCmd(char *av[], int ac, char *path)
 {
     char* argv[MAXSPLIT] = {0};
-    int i, j;
-    int num_in = 0; 
-    int num_out = 0;
-    int fd_in, fd_out;
+    int i, j, k;
+    int f_stdin = 0; 
+    int f_stdout = 0;
+    int fd;
     pid_t child;
     int status;
 
@@ -96,62 +97,18 @@ void execCmd(char *av[], int ac, char *path)
     if (child == 0) {
         for (i = 0; i < ac; i++) {
             if (strcmp(av[i], ">") == 0) {
-                num_out = i;
-            }
-            if (strcmp(av[i], "<") == 0) {
-                num_in = i;
+                fd = open(av[i + 1], O_WRONLY|O_CREAT|O_TRUNC, 0644);
+                close(1);
+                dup(fd);
+                close(fd);
+                for (j = 0; j < i; j++) {
+                    argv[j] = av[j];
+                }
+                argv[j] = NULL;
+                execvp(argv[0], argv);
             }
         }
-        if (num_in == 0 && num_out == 0) {
-            execvp(av[0], av);
-        } else {
-            if (num_in != 0) {
-                /* error check */
-                fd_in = open(av[num_in + 1], 
-                    O_RDWR|O_CREAT|O_TRUNC, 0644);
-                close(0);
-                dup(fd_in);
-                close(fd_in);
-                if (num_out == 0) {
-                    for (i = 0; i < num_in; i++) {
-                        argv[i] = av[i];
-                    }
-                    argv[i] = NULL;
-                }
-            }
-            if (num_out != 0) {
-                /* error check */
-                fd_out = open(av[num_out + 1], 
-                    O_RDWR|O_CREAT|O_TRUNC, 0644);
-                close(1);
-                dup(fd_out);
-                close(fd_out);
-                if (num_in == 0) {
-                    for (i  = 0; i < num_out; i++) {
-                        argv[i] = av[i];
-                    }
-                    argv[i] = NULL;
-                }
-            }
-            if (num_in != 0 && num_out != 0) {
-                if (num_in > num_out) {
-                    for (i = 0; i < num_out; i++) {
-                        argv[i] = av[i];
-                    }
-                    argv[i] = NULL;
-                } else {
-                    for (i = 0; i < num_in; i++) {
-                        argv[i] = av[i];
-                    }
-                    argv[i] = NULL;
-                }
-                printf("in = %d, out = %d\n", num_in, num_out);
-                for (j = 0; j < i; j++) {
-                    printf("argv[%d]= %s\n", i, argv[i]);
-                }
-            }
-            execvp(argv[0], argv);
-        } 
+        execvp(av[0], av);
     } else {
         wait(&status);
     }
